@@ -14,6 +14,7 @@ class point_finder:
         self.list_of_outer_y = []
         self.list_of_outer_points = []
         self.middle_point = []
+        self.point_that_changed = None
         self.fill_lists()
         self.starting_point = self.random_list_of_points[self.list_of_y_vals.index(max(self.list_of_y_vals))]
         self.recursive_point_finding()
@@ -97,10 +98,12 @@ class point_finder:
                 if dist > self.longest_dist:
                     self.middle_point = np.array(points+0.5*self.vector)
                     self.longest_dist = dist
+        self.first_middle_point = self.middle_point
         self.fix_middle_point()
 
     def fix_radius(self):
         max_distance = 0
+        self.old_rad = self.longest_dist
         for points in self.list_of_outer_points:
             distance_to_middle = math.hypot((self.middle_point[0] - points[0]), (self.middle_point[1] - points[1]))
             if distance_to_middle > max_distance:
@@ -116,10 +119,11 @@ class point_finder:
                 margin_of_error = distance_to_middle - radius
                 if margin_of_error > max_error:
                     max_error = margin_of_error
+                    self.point_that_changed = points
         error_vec = np.array([(self.middle_point[0] - points[0]), (self.middle_point[1] - points[1])])
         v_hat = np.array(error_vec / (error_vec ** 2).sum() ** 0.5)
 
-        v_hat *= max_error*0.5
+        v_hat *= max_error*-0.5
         print("anfang:",self.middle_point)
         self.middle_point = self.middle_point+v_hat
         print("ende:", self.middle_point)
@@ -132,7 +136,11 @@ radius  = x.longest_dist
 subplt = plt.subplot()
 plt.scatter(x.list_of_x_vals, x.list_of_y_vals, s=10, facecolors='none', edgecolors='g')
 plt.scatter(x.list_of_outer_x,x.list_of_outer_y, s=10, facecolors='none', edgecolors='red')
-subplt.add_patch(plt.Circle(x.middle_point, radius, color='orange', alpha=0.3))
+plt.scatter(x.first_middle_point[0],x.first_middle_point[1], s=10, facecolors='none', edgecolors='black')
+plt.scatter(x.middle_point[0],x.middle_point[1], s=10, facecolors='none', edgecolors='blue')
+if not x.point_that_changed is None: plt.scatter(x.point_that_changed[0],x.point_that_changed[1], s=20, facecolors='none', edgecolors='grey')
+subplt.add_patch(plt.Circle(x.middle_point, radius, color='blue', alpha=0.3))
+subplt.add_patch(plt.Circle(x.first_middle_point, x.old_rad, color='red', alpha=0.1))
 subplt.set_aspect('equal', adjustable='datalim')
 subplt.plot()
 plt.show()
