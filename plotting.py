@@ -82,29 +82,68 @@ class point_finder:
             self.list_of_outer_x.append(x[0])
             self.list_of_outer_y.append(x[1])
 
+
+
     def get_longest_distance_between_outer_points(self):
         self.middle_point = []#[mean(self.list_of_outer_x),mean(self.list_of_outer_y)]
         self.longest_dist = 0
         for points in self.list_of_outer_points:
             for points_2 in self.list_of_outer_points:
-                self.vector = [(points_2[0] - points[0]), (points_2[1] - points[1])]
+                self.vector = np.array([(points_2[0] - points[0]), (points_2[1] - points[1])])
+
+
                 dist = math.hypot(self.vector[0]/2,self.vector[1]/2)
                 if dist > self.longest_dist:
-                    self.middle_point = [0,0]
+                    self.middle_point = np.array(points+0.5*self.vector)
                     self.longest_dist = dist
+
+    def fix_radius(self):
+        max_distance = 0
+        for points in self.list_of_outer_points:
+            distance_to_middle = math.hypot((self.middle_point[0] - points[0]), (self.middle_point[1] - points[1]))
+            if distance_to_middle > max_distance:
+                max_distance = distance_to_middle
+        self.longest_dist = max_distance
+
+    def fix_middle_point(self):
+        radius = self.longest_dist
+        max_error = 0
+        margin_of_error =0
+        for points in self.list_of_outer_points:
+            distance_to_middle = math.hypot((self.middle_point[0] - points[0]), (self.middle_point[1] - points[1]))
+
+            if distance_to_middle > radius:
+                margin_of_error = distance_to_middle - radius
+                if margin_of_error > max_error:
+                    max_error = margin_of_error
+        error_vec = np.array([(self.middle_point[0] - points[0]), (self.middle_point[1] - points[1])])
+        v_hat = np.array(error_vec / (error_vec ** 2).sum() ** 0.5)
+        v_hat *= margin_of_error*0.5
+        self.middle_point = v_hat
+        print(self.middle_point)
+        print("korigiert: ",v_hat)
+        self.fix_radius()
+
+
+
+
+
+                #print("margin of error:",margin_of_error, " in vector:",v_hat)
 
 
 x = point_finder()
 x.recursive_point_finding()
 x.get_longest_distance_between_outer_points()
+x.fix_middle_point()
+
 radius  = x.longest_dist
-
-
+print(x.middle_point)
+print(x.vector)
 subplt = plt.subplot()
 print(x.longest_dist)
 plt.scatter(x.list_of_x_vals, x.list_of_y_vals, s=10, facecolors='none', edgecolors='g')
 plt.scatter(x.list_of_outer_x,x.list_of_outer_y, s=10, facecolors='none', edgecolors='red')
-subplt.add_patch(plt.Circle(x.middle_point, radius, color='purple', alpha=0.3))
+subplt.add_patch(plt.Circle(x.middle_point, radius, color='orange', alpha=0.3))
 subplt.set_aspect('equal', adjustable='datalim')
 subplt.plot()
 plt.show()
