@@ -1,23 +1,39 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import calculating
-import numpy.linalg as la
-from statistics import mean
+import time
 import math
 
 class point_finder:
     def __init__(self, number_of_points=50):
-        self.random_list_of_points = calculating.generate_random_array(number_of_points)
+        self.number_of_points_to_create = number_of_points
+        self.was_already_perfect = 0
+        self.origin_radius = 0
+        self.origin_center = [0,0]
+        self.correction_vector = [0,0]
         self.list_of_x_vals = []
         self.list_of_y_vals =[]
         self.list_of_outer_x =[]
         self.list_of_outer_y = []
         self.list_of_outer_points = []
-        self.middle_point = []
+        self.center = []
         self.point_that_changed = None
+        self.running_time = 0
+
+        self.random_list_of_points = calculating.generate_random_array(self.number_of_points_to_create)
         self.fill_lists()
         self.starting_point = self.random_list_of_points[self.list_of_y_vals.index(max(self.list_of_y_vals))]
-        self.recursive_point_finding()
+
+        self.master_function()
+
+    def master_function(self):
+        starttime = time.time()
+        self.recursive_point_finding() #get the border points
+        self.set_first_radius_and_center()
+        if self.optimize_circle(): #if something needs to be fixed
+            self.fix_radius()
+        self.running_time = time.time() -starttime
+        print("Time needed for optimization: ",self.running_time)
 
     def fill_lists(self):
         for x in self.random_list_of_points:
@@ -40,6 +56,18 @@ class point_finder:
         """ Returns the angle in degrees between vectors 'v1' and 'v2'    """
         angle = np.math.atan2(np.linalg.det([v1, v2]), np.dot(v1, v2))
         return np.degrees(angle)
+
+    def get_unit_vector(self,vector):
+        return np.array(vector / self.get_length_of_vector(vector))
+
+    def get_length_of_vector(self,vector):
+        return math.sqrt((vector[0] ** 2) + (vector[1] ** 2))
+
+    def get_direction_vector(self,point1,point2): #simple vector from points
+        return np.array([point1[0]-point2[0],point1[1]-point2[1]])
+
+    def get_original_vector(self,point):
+        return self.get_direction_vector(point,self.center)
 
     def test_neighbour_points(self,point):
         """this function should return all the outer points. We get the most up point and then test all
@@ -84,63 +112,62 @@ class point_finder:
             self.list_of_outer_x.append(x[0])
             self.list_of_outer_y.append(x[1])
 
-        self.get_longest_distance_between_outer_points()
-
-
-
-    def get_longest_distance_between_outer_points(self):
-        self.middle_point = []#[mean(self.list_of_outer_x),mean(self.list_of_outer_y)]
-        self.longest_dist = 0
+    def set_first_radius_and_center(self):
+        self.center = []#[mean(self.list_of_outer_x),mean(self.list_of_outer_y)]
+        self.radius = 0
         for points in self.list_of_outer_points:
             for points_2 in self.list_of_outer_points:
                 self.vector = np.array([(points_2[0] - points[0]), (points_2[1] - points[1])])
-                dist = math.hypot(self.vector[0]/2,self.vector[1]/2)
-                if dist > self.longest_dist:
-                    self.middle_point = np.array(points+0.5*self.vector)
-                    self.longest_dist = dist
-        self.first_middle_point = self.middle_point
-        self.fix_middle_point()
+                rad = math.hypot(self.vector[0]/2,self.vector[1]/2)
+                if rad > self.radius:
+                    self.center = np.array(points + 0.5 * self.vector) #set center between furthest points as our first center
+                    self.radius = rad
+        self.origin_center = self.center
+        self.origin_radius = self.radius
+
+    def find_worst_error(self): #returns the point that is furthest of the circle
+        worst_error = self.radius
+        worst_point = []
+        for point in self.list_of_outer_points:
+            distance_to_center = self.get_length_of_vector(self.get_original_vector(point))
+            if distance_to_center > self.radius and distance_to_center > worst_error:
+                worst_error = distance_to_center
+                worst_point = point
+        return np.array(worst_point),worst_error
+
+    def optimize_circle(self):
+        worst_point,worst_point_dist = self.find_worst_error()
+        if worst_point_dist == self.radius:
+            self.was_already_perfect = 1
+            return False
+        unit_vec_of_worst_point = self.get_unit_vector(worst_point)
+        margin_of_error = worst_point_dist - self.radius
+        self.correction_vector = unit_vec_of_worst_point*margin_of_error
+        self.origin_center = self.center
+        self.center = self.center + self.correction_vector
+        return True
 
     def fix_radius(self):
-        max_distance = 0
-        self.old_rad = self.longest_dist
-        for points in self.list_of_outer_points:
-            distance_to_middle = math.hypot((self.middle_point[0] - points[0]), (self.middle_point[1] - points[1]))
-            if distance_to_middle > max_distance:
-                max_distance = distance_to_middle
-        self.longest_dist = max_distance
+        worst_point, worst_point_dist = self.find_worst_error()
+        self.origin_radius = self.radius
+        self.radius = worst_point_dist
 
-    def fix_middle_point(self):
-        radius = self.longest_dist
-        max_error = 0
-        for points in self.list_of_outer_points:
-            distance_to_middle = math.hypot((self.middle_point[0] - points[0]), (self.middle_point[1] - points[1]))
-            if distance_to_middle > radius:
-                margin_of_error = distance_to_middle - radius
-                if margin_of_error > max_error:
-                    max_error = margin_of_error
-                    self.point_that_changed = points
-        error_vec = np.array([(self.middle_point[0] - points[0]), (self.middle_point[1] - points[1])])
-        v_hat = np.array(error_vec / (error_vec ** 2).sum() ** 0.5)
+class plotting:
+    def __init__(self):
+        self.pointfinder = point_finder()
+        self.subplt = plt.subplot()
 
-        v_hat *= max_error*-0.5
-        print("anfang:",self.middle_point)
-        self.middle_point = self.middle_point+v_hat
-        print("ende:", self.middle_point)
-        self.fix_radius()
+    def plot_results(self):
+        self.subplt.scatter(self.pointfinder.list_of_x_vals, self.pointfinder.list_of_y_vals, s=10, facecolors='none', edgecolors='g')
+        self.subplt.scatter(self.pointfinder.list_of_outer_x, self.pointfinder.list_of_outer_y, s=10, facecolors='none', edgecolors='red')
+        self.subplt.scatter(self.pointfinder.center[0], self.pointfinder.center[1], s=10, facecolors='none', edgecolors='blue')
+        self.subplt.scatter(self.pointfinder.origin_center[0], self.pointfinder.origin_center[1], s=10, facecolors='none', edgecolors='black')
+        self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='blue', alpha=0.3))
+        self.subplt.add_patch(plt.Circle(self.pointfinder.origin_center, self.pointfinder.origin_radius, color='grey', alpha=0.1))
+        self.subplt.set_aspect('equal', adjustable='datalim')
+        self.subplt.plot()
+        plt.show()
 
 
-x = point_finder()
 
-radius  = x.longest_dist
-subplt = plt.subplot()
-plt.scatter(x.list_of_x_vals, x.list_of_y_vals, s=10, facecolors='none', edgecolors='g')
-plt.scatter(x.list_of_outer_x,x.list_of_outer_y, s=10, facecolors='none', edgecolors='red')
-plt.scatter(x.first_middle_point[0],x.first_middle_point[1], s=10, facecolors='none', edgecolors='black')
-plt.scatter(x.middle_point[0],x.middle_point[1], s=10, facecolors='none', edgecolors='blue')
-if not x.point_that_changed is None: plt.scatter(x.point_that_changed[0],x.point_that_changed[1], s=20, facecolors='none', edgecolors='grey')
-subplt.add_patch(plt.Circle(x.middle_point, radius, color='blue', alpha=0.3))
-subplt.add_patch(plt.Circle(x.first_middle_point, x.old_rad, color='red', alpha=0.1))
-subplt.set_aspect('equal', adjustable='datalim')
-subplt.plot()
-plt.show()
+
