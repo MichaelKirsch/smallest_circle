@@ -10,6 +10,7 @@ class point_finder:
         self.was_already_perfect = 0
         self.origin_radius = 0
         self.origin_center = [0,0]
+        self.origin_longest_distance_points = []
         self.correction_vector = [0,0]
         self.list_of_x_vals = []
         self.list_of_y_vals =[]
@@ -120,6 +121,7 @@ class point_finder:
                 self.vector = np.array([(points_2[0] - points[0]), (points_2[1] - points[1])])
                 rad = math.hypot(self.vector[0]/2,self.vector[1]/2)
                 if rad > self.radius:
+                    self.origin_longest_distance_points = [points,points_2]
                     self.center = np.array(points + 0.5 * self.vector) #set center between furthest points as our first center
                     self.radius = rad
         self.origin_center = self.center
@@ -142,6 +144,7 @@ class point_finder:
             return False
         unit_vec_of_worst_point = self.get_unit_vector(worst_point)
         margin_of_error = worst_point_dist - self.radius
+        self.origin_longest_distance_points.append(worst_point)
         self.correction_vector = unit_vec_of_worst_point*margin_of_error
         self.origin_center = self.center
         self.center = self.center + self.correction_vector
@@ -151,6 +154,10 @@ class point_finder:
         worst_point, worst_point_dist = self.find_worst_error()
         self.origin_radius = self.radius
         self.radius = worst_point_dist
+
+    def get_center_of_three_points(self):
+        pass
+
 
 class plotting:
     def __init__(self):
@@ -162,6 +169,14 @@ class plotting:
         self.subplt.scatter(self.pointfinder.list_of_outer_x, self.pointfinder.list_of_outer_y, s=10, facecolors='none', edgecolors='red')
         self.subplt.scatter(self.pointfinder.center[0], self.pointfinder.center[1], s=10, facecolors='none', edgecolors='blue')
         self.subplt.scatter(self.pointfinder.origin_center[0], self.pointfinder.origin_center[1], s=10, facecolors='none', edgecolors='black')
+        worst_x = []
+        worst_y = []
+        for x in self.pointfinder.origin_longest_distance_points:
+            worst_x.append(x[0])
+            worst_y.append(x[1])
+
+        self.subplt.scatter(worst_x, worst_y, s=10,facecolors='none', edgecolors='orange')
+
         self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='blue', alpha=0.3))
         self.subplt.add_patch(plt.Circle(self.pointfinder.origin_center, self.pointfinder.origin_radius, color='grey', alpha=0.1))
         self.subplt.set_aspect('equal', adjustable='datalim')
