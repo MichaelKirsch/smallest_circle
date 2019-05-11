@@ -158,12 +158,13 @@ class plotting:
         self.subplt = plt.subplot()
 
     def plot_results(self):
-        self.subplt.scatter(self.pointfinder.list_of_x_vals, self.pointfinder.list_of_y_vals, s=10, facecolors='none', edgecolors='g')
-        self.subplt.scatter(self.pointfinder.list_of_outer_x, self.pointfinder.list_of_outer_y, s=10, facecolors='none', edgecolors='red')
-        self.subplt.scatter(self.pointfinder.center[0], self.pointfinder.center[1], s=10, facecolors='none', edgecolors='blue')
+        self.subplt.scatter(self.pointfinder.list_of_x_vals, self.pointfinder.list_of_y_vals, s=10, facecolors='none', edgecolors='grey')
+        self.subplt.scatter(self.pointfinder.list_of_outer_x, self.pointfinder.list_of_outer_y, s=10, facecolors='none', edgecolors='blue')
+        self.subplt.scatter(self.pointfinder.center[0], self.pointfinder.center[1], s=20, facecolors='none', edgecolors='red')
         self.subplt.scatter(self.pointfinder.origin_center[0], self.pointfinder.origin_center[1], s=10, facecolors='none', edgecolors='black')
-        self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='blue', alpha=0.3))
-        self.subplt.add_patch(plt.Circle(self.pointfinder.origin_center, self.pointfinder.origin_radius, color='grey', alpha=0.1))
+        self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='orange', alpha=0.4, fill=True))
+        self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='red', alpha=1.0, fill=False))
+        self.subplt.add_patch(plt.Circle(self.pointfinder.origin_center, self.pointfinder.origin_radius, color='blue', alpha=0.5, fill=False))
         self.subplt.set_aspect('equal', adjustable='datalim')
         self.subplt.plot()
         plt.show()
