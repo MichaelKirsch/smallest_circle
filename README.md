@@ -1,6 +1,8 @@
 # ****Smallest Circle Problem****
 
-_Author: Michael Kirsch_
+_Author: Michael Kirsch_,
+IDE used PyCharm 2019.1 Professional,
+Tested in Python 3.7
 
 **_Getting started:_**
 

@@ -174,16 +174,16 @@ class point_finder: #find the smallest radius around a set of points
         self.origin_radius = self.radius
         self.radius = worst_point_dist
 
-class plot_circle:
+class plot_circle(point_finder):
     #when we are done we throw all of our data against a simple plot
     #we plot our final circle, our first guess, our fist center, the new center and all the points
     def __init__(self,points_to_plot = 0):
-        if points_to_plot is 0:
-            self.points_to_plot = random.randint(25,60)
-        else:
-            self.points_to_plot =points_to_plot
 
-        self.pointfinder = point_finder(self.points_to_plot)
+        if points_to_plot is 0: #if you want to plot a certain amount of points you can choose
+            self.points_to_plot = random.randint(25,60) #if not then it will be a random amount
+        else:
+            self.points_to_plot = points_to_plot
+        super().__init__(self.points_to_plot)
         self.subplt = plt.subplot()
 
     def do_new_set(self):
@@ -191,13 +191,13 @@ class plot_circle:
         self.plot_results()
 
     def plot_results(self):
-        self.subplt.scatter(self.pointfinder.list_of_x_vals, self.pointfinder.list_of_y_vals, s=10, facecolors='none', edgecolors='grey')
-        self.subplt.scatter(self.pointfinder.list_of_outer_x, self.pointfinder.list_of_outer_y, s=10, facecolors='none', edgecolors='blue')
-        self.subplt.scatter(self.pointfinder.center[0], self.pointfinder.center[1], s=20, facecolors='none', edgecolors='red')
-        self.subplt.scatter(self.pointfinder.origin_center[0], self.pointfinder.origin_center[1], s=10, facecolors='none', edgecolors='black')
-        self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='orange', alpha=0.4, fill=True))
-        self.subplt.add_patch(plt.Circle(self.pointfinder.center, self.pointfinder.radius, color='red', alpha=1.0, fill=False))
-        self.subplt.add_patch(plt.Circle(self.pointfinder.origin_center, self.pointfinder.origin_radius, color='blue', alpha=0.5, fill=False))
+        self.subplt.scatter(self.list_of_x_vals, self.list_of_y_vals, s=10, facecolors='none', edgecolors='grey')
+        self.subplt.scatter(self.list_of_outer_x, self.list_of_outer_y, s=10, facecolors='none', edgecolors='blue')
+        self.subplt.scatter(self.center[0], self.center[1], s=20, facecolors='none', edgecolors='red')
+        self.subplt.scatter(self.origin_center[0], self.origin_center[1], s=10, facecolors='none', edgecolors='black')
+        self.subplt.add_patch(plt.Circle(self.center, self.radius, color='orange', alpha=0.4, fill=True))
+        self.subplt.add_patch(plt.Circle(self.center, self.radius, color='red', alpha=1.0, fill=False))
+        self.subplt.add_patch(plt.Circle(self.origin_center, self.origin_radius, color='blue', alpha=0.5, fill=False))
         self.subplt.set_aspect('equal', adjustable='datalim')
         self.subplt.plot()
         plt.show()
