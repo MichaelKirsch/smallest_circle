@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
+import random
 import numpy as np
-import calculating
 import time
 import math
 
 class point_finder:
-    def __init__(self, number_of_points=50):
+    def __init__(self, number_of_points):
         self.number_of_points_to_create = number_of_points
         self.was_already_perfect = 0
         self.origin_radius = 0
@@ -17,23 +17,44 @@ class point_finder:
         self.list_of_outer_y = []
         self.list_of_outer_points = []
         self.center = []
+        self.radius = 0
         self.point_that_changed = None
         self.running_time = 0
 
-        self.random_list_of_points = calculating.generate_random_array(self.number_of_points_to_create)
+        self.random_list_of_points = self.generate_random_array(number_of_points)
         self.fill_lists()
         self.starting_point = self.random_list_of_points[self.list_of_y_vals.index(max(self.list_of_y_vals))]
 
         self.master_function()
 
-    def master_function(self):
+    def master_function(self): #this functions calls all the other clas functions. its just here to keep track more easy
         starttime = time.time()
         self.recursive_point_finding() #get the border points
         self.set_first_radius_and_center()
         if self.optimize_circle(): #if something needs to be fixed
-            self.fix_radius()
-        self.running_time = time.time() -starttime
-        print("Time needed for optimization: ",self.running_time)
+            self.optimize_radius()
+        self.running_time = time.time() - starttime
+        print("Time needed for optimization: ", self.running_time)
+        print("Plotted Points:",self.number_of_points_to_create," Radius:",self.radius," Vector of center:",self.center)
+
+
+    def scale_input(self,value_to_scale, mini=25,
+                    maxi=60):  # make sure the number is between two values (25 and 60 for array size of the input)
+        if value_to_scale <= mini:
+            return mini  # crop any number to a definite min or max
+        elif value_to_scale >= maxi:
+            return maxi
+        else:
+            return value_to_scale
+
+    def generate_random_array(self,size_of_final_array=24,
+                              range_of_values=15):  # fill a list with random lists of values and return the list
+        array_to_return = []
+        for points in range(self.scale_input(size_of_final_array)):
+            random_x = random.randint(-range_of_values, range_of_values)
+            random_y = random.randint(-range_of_values, range_of_values)
+            array_to_return.append((random_x, random_y))
+        return array_to_return  # return the filled list
 
     def fill_lists(self):
         for x in self.random_list_of_points:
@@ -69,17 +90,16 @@ class point_finder:
     def get_original_vector(self,point):
         return self.get_direction_vector(point,self.center)
 
-    def test_neighbour_points(self,point):
-        """this function should return all the outer points. We get the most up point and then test all
-        the points to the right. We will build the vector between the two testing points and then get the
-        angle of the resulting vector against one of the axes(dependent on the quadrant the point is in).
-        The point with the smallest angle has to be the next outer point. This function will recursively
-        call itself until it finds itself on its starting-point. The resulting point are saved in a list"""
+    def edgefinder(self, point):
+        """This function will get all the points that border the cluster. We start at the point with the highest y-value. From that point we will
+        measure to the left and probe all direction vektors of all points against a vektor that is determined by the quadrant out point is in. The point with the
+        smallest angle has to be our next border point to the left. This will be done until we find our first point in our array of border points. This method can be improved by only testing aginst points in
+        the own quadrant"""
 
         quadrant_this_point_is_in = self.get_quadrant(point)
         vector_to_test_against = []
 
-        if quadrant_this_point_is_in is 1:
+        if quadrant_this_point_is_in is 1: #get the vector to test against
             vector_to_test_against = [1, 1]
         elif quadrant_this_point_is_in is 2:
             vector_to_test_against = [-1, 1]
@@ -94,27 +114,26 @@ class point_finder:
             if val is point:
                 pass #dont test against the own point
             else:
+                #TODO: function could be improved by testing points in own quadrant first
                 vector_between_the_two_points = np.array([point[0] - val[0], point[1] - val[1]])
                 angle = self.get_angle_between_vectors(vector_to_test_against, vector_between_the_two_points)
-                if angle < smallest_angle:
+                if angle < smallest_angle: # we get the smallest angle and then test with our new point
                     neighbour_point = val
                     smallest_angle = angle
         return neighbour_point
 
-    def recursive_point_finding(self):
+    def recursive_point_finding(self): #this function will call the edgefinder to fill up the arrays
         point_to_test = self.starting_point
 
         while point_to_test not in self.list_of_outer_points:
             self.list_of_outer_points.append(point_to_test)
-            point_to_test = self.test_neighbour_points(point_to_test)
+            point_to_test = self.edgefinder(point_to_test)
 
         for x in self.list_of_outer_points:
             self.list_of_outer_x.append(x[0])
             self.list_of_outer_y.append(x[1])
 
-    def set_first_radius_and_center(self):
-        self.center = []#[mean(self.list_of_outer_x),mean(self.list_of_outer_y)]
-        self.radius = 0
+    def set_first_radius_and_center(self): #find the two points that are furthest away and find the center between them
         for points in self.list_of_outer_points:
             for points_2 in self.list_of_outer_points:
                 self.vector = np.array([(points_2[0] - points[0]), (points_2[1] - points[1])])
@@ -125,7 +144,7 @@ class point_finder:
         self.origin_center = self.center
         self.origin_radius = self.radius
 
-    def find_worst_error(self): #returns the point that is furthest of the circle
+    def find_worst_error(self): #returns the point that is furthest of the radius
         worst_error = self.radius
         worst_point = []
         for point in self.list_of_outer_points:
@@ -136,6 +155,8 @@ class point_finder:
         return np.array(worst_point),worst_error
 
     def optimize_circle(self):
+        #after we set our first center we find the points outside (if there are any) and take the worst
+        #with the worst point we will calculate our new center
         worst_point,worst_point_dist = self.find_worst_error()
         if worst_point_dist == self.radius:
             self.was_already_perfect = 1
@@ -147,14 +168,17 @@ class point_finder:
         self.center = self.center + self.correction_vector
         return True
 
-    def fix_radius(self):
+    def optimize_radius(self):
+        #when we switched our center we try to get the smallest radius possible
         worst_point, worst_point_dist = self.find_worst_error()
         self.origin_radius = self.radius
         self.radius = worst_point_dist
 
-class plotting:
-    def __init__(self):
-        self.pointfinder = point_finder()
+class plot_circle:
+    #when we are done we throw all of our data against a simple plot
+    #we plot our final circle, our first guess, our fist center, the new center and all the points
+    def __init__(self,points_to_plot = 50):
+        self.pointfinder = point_finder(points_to_plot)
         self.subplt = plt.subplot()
 
     def plot_results(self):

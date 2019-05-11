@@ -1,5 +1,8 @@
 # ****Smallest Circle Problem****
 
+_Getting started:_
+
+
 ![picture](pictures/finalstep.png)
 
 **Task:** The challenge is to design an algorithm in python that is finding the smallest circle around a cluster of points in 2D.

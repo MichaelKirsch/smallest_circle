@@ -1,4 +1,3 @@
-import plotting
+import plot_circle
 
-x = plotting.plotting()
-x.plot_results()
+plot_circle.plot_circle(60).plot_results() #we can change the number of plotted points here or take the given standard
