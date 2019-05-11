@@ -4,7 +4,7 @@ import numpy as np
 import time
 import math
 
-class point_finder:
+class point_finder: #find the smallest radius around a set of points
     def __init__(self, number_of_points):
         self.number_of_points_to_create = number_of_points
         self.was_already_perfect = 0
@@ -178,8 +178,13 @@ class plot_circle:
     #when we are done we throw all of our data against a simple plot
     #we plot our final circle, our first guess, our fist center, the new center and all the points
     def __init__(self,points_to_plot = 50):
+        self.points_to_plot =points_to_plot
         self.pointfinder = point_finder(points_to_plot)
         self.subplt = plt.subplot()
+
+    def do_new_set(self):
+        self.pointfinder = point_finder(self.points_to_plot)
+        self.plot_results()
 
     def plot_results(self):
         self.subplt.scatter(self.pointfinder.list_of_x_vals, self.pointfinder.list_of_y_vals, s=10, facecolors='none', edgecolors='grey')
