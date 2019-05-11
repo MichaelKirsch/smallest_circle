@@ -35,7 +35,7 @@ class point_finder: #find the smallest radius around a set of points
             self.optimize_radius()
         self.running_time = time.time() - starttime
         print("Time needed for optimization: ", self.running_time)
-        print("Plotted Points:",self.number_of_points_to_create," Radius:",self.radius," Vector of center:",self.center)
+        print("Plotted Points:",self.number_of_points_to_create,"| Radius:",self.radius,"| Vector of center:",self.center)
 
 
     def scale_input(self,value_to_scale, mini=25,
