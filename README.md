@@ -1,6 +1,8 @@
 # ****Smallest Circle Problem****
 
-_Getting started:_
+_Author: Michael Kirsch_
+
+**_Getting started:_**
 
 To install the package open up a new venv with: python3 -m venv tutorial-env
 After that activate the venv and run: pip install -r requirements.txt

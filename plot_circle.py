@@ -177,9 +177,13 @@ class point_finder: #find the smallest radius around a set of points
 class plot_circle:
     #when we are done we throw all of our data against a simple plot
     #we plot our final circle, our first guess, our fist center, the new center and all the points
-    def __init__(self,points_to_plot = 50):
-        self.points_to_plot =points_to_plot
-        self.pointfinder = point_finder(points_to_plot)
+    def __init__(self,points_to_plot = 0):
+        if points_to_plot is 0:
+            self.points_to_plot = random.randint(25,60)
+        else:
+            self.points_to_plot =points_to_plot
+
+        self.pointfinder = point_finder(self.points_to_plot)
         self.subplt = plt.subplot()
 
     def do_new_set(self):
